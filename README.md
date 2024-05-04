@@ -1,4 +1,3 @@
-```markdown
 # Distributed Messaging System
 
 This project is a distributed messaging system deployed across multiple AWS servers using Docker, Kubernetes, and Terraform. The system allows sending messages to recipients through various communication channels, including email, SMS, WhatsApp, Telegram, and Viber.
@@ -44,4 +43,3 @@ If you find a bug or would like to propose an improvement, please create a pull 
 ## License
 
 This project is distributed under the [MIT License](LICENSE).
-```
