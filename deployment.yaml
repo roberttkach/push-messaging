@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: your-app
-        image: your-app-image
+        image: cr.yandex/your_container_registry/your-app-image
         env:
         - name: DB_USER
           value: your_db_user
