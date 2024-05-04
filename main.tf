@@ -1,49 +1,51 @@
-provider "aws" {
-  region = "us-west-2"
+provider "yandex" {
+  token     = "your_yandex_cloud_token"
+  cloud_id  = "your_cloud_id"
+  folder_id = "your_folder_id"
+  zone      = "ru-central1-a"
 }
 
-resource "aws_instance" "servers" {
+resource "yandex_compute_instance" "servers" {
   count         = 4
-  ami           = "ami-0c94855ba95c71c99" # Amazon Linux 2 AMI
-  instance_type = "t2.micro"
+  name          = "server-${count.index}"
+  zone          = "ru-central1-a"
+  platform_id   = "standard-v2"
+  resources {
+    cores  = 2
+    memory = 2
+  }
 
-  vpc_security_group_ids = [
-    aws_security_group.allow_http.id,
-  ]
+  boot_disk {
+    initialize_params {
+      image_id = "your_image_id"
+    }
+  }
 
-  user_data = <<-EOF
-    #!/bin/bash
-    sudo amazon-linux-extras install -y docker
-    sudo service docker start
-    sudo usermod -a -G docker ec2-user
-    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get update
-    sudo apt-get install -y docker-ce
-    sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-    sudo echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-    sudo apt-get update
-    sudo apt-get install -y kubelet kubeadm kubectl
-    sudo swapoff -a
-    sudo kubeadm init --pod-network-cidr=10.244.0.0/16
-    mkdir -p $HOME/.kube
-    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-    sudo chown $(id -u):$(id -g) $HOME/.kube/config
-  EOF
-}
+  network_interface {
+    subnet_id = "your_subnet_id"
+    nat       = true
+  }
 
-resource "aws_security_group" "allow_http" {
-  name        = "allow-http"
-  description = "Allow HTTP inbound traffic"
-
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  metadata = {
+    user-data = <<-EOF
+      #!/bin/bash
+      sudo apt-get update
+      sudo apt-get install -y docker.io
+      sudo systemctl start docker
+      sudo systemctl enable docker
+      curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+      echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+      sudo apt-get update
+      sudo apt-get install -y kubelet kubeadm kubectl
+      sudo swapoff -a
+      sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+      mkdir -p $HOME/.kube
+      sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    EOF
   }
 }
 
 output "server_ips" {
-  value = aws_instance.servers[*].public_ip
+  value = yandex_compute_instance.servers[*].network_interface[0].nat_ip_address
 }
