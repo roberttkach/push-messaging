@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: your-app
+spec:
+  replicas: 16
+  selector:
+    matchLabels:
+      app: your-app
+  template:
+    metadata:
+      labels:
+        app: your-app
+    spec:
+      containers:
+      - name: your-app
+        image: your-app-image
+        env:
+        - name: DB_USER
+          value: your_db_user
+        - name: DB_NAME
+          value: your_db_name
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: password
+        - name: DB_SSLMODE
+          value: your_db_sslmode
+        - name: DB_HOST
+          value: your_db_hostname
+        ports:
+        - containerPort: 8080
